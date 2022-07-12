@@ -5,6 +5,7 @@ volumes:
   dashboard-data:
   adguardhome_work:
   adguardhome_conf:
+  mysql_data:
 
 services:
   speedtest:
@@ -26,7 +27,7 @@ services:
     restart: always
     build: ./dashboard
     ports:
-      - "90:80"
+      - "1928:80"
     volumes:
       - "dashboard-data:/data"
   influxdb:
@@ -64,11 +65,13 @@ services:
     labels:
       io.balena.features.supervisor-api: 1
     environment:
-      SET_HOSTNAME: adguard
+      SET_HOSTNAME: HomePi
   db:
-    image: mysql:latest
+    image: arm64v8/mysql:oracle
     command: --default-authentication-plugin=mysql_native_password
     restart: always
     network_mode: host
+    volumes:
+      - "mysql_data:/var/lib/mysql"
     environment:
       MYSQL_ROOT_PASSWORD: exampl
