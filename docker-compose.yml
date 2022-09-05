@@ -5,6 +5,9 @@ volumes:
   dashboard-data:
   adguardhome_work:
   adguardhome_conf:
+  Pictures:
+  storage:
+  database:
 
 services:
   speedtest:
