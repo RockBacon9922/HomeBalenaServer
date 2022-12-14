@@ -74,15 +74,11 @@ services:
     hostname: pritunl
     restart: always
     ports:
-      - "80:80/tcp"
-      - "443:443/tcp"
+      - "100:80/tcp"
       - "1054:1054/tcp"
       - "1194:1194/tcp"
       - "1195:1195/udp"
       - "9700:9700/tcp"
-    networks:
-      vpn:
-        ipv4_address: 192.168.1.88
     volumes:
       - "vpnsettings:/data"
   # 80/tcp pritunl web server http port (standalone mode)
@@ -95,18 +91,5 @@ services:
     image: mongo:latest
     container_name: pritunldb
     hostname: pritunldb
-    networks:
-      vpn:
-        ipv4_address: 192.168.1.90
     volumes:
       - "db:/data/db"
-
-networks:
-  vpn:
-    driver: bridge
-    enable_ipv6: false
-    ipam:
-      driver: default
-      config:
-        - subnet: 255.255.255.0/24
-          gateway: 192.168.1.254
