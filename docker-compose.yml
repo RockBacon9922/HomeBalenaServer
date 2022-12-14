@@ -5,10 +5,7 @@ volumes:
   dashboard-data:
   adguardhome_work:
   adguardhome_conf:
-  originals:
-  storage:
-  database:
-  duplicati:
+
 services:
   speedtest:
     build: ./speedtest
@@ -69,80 +66,20 @@ services:
     environment:
       SET_HOSTNAME: HomePi
 
-  photoprism:
-    image: photoprism/photoprism:arm64
+  vpn:
+    image: goofball222/pritunl
+    privileged: true
+    restart: always
     ports:
-      - 2342:2342
-    environment:
-      PHOTOPRISM_ADMIN_PASSWORD: "stoneham" # PLEASE CHANGE: Your initial admin password (min 4 characters)
-      PHOTOPRISM_ORIGINALS_LIMIT: 1000 # File size limit for originals in MB (increase for high-res video)
-      PHOTOPRISM_HTTP_COMPRESSION: "none" # Improves transfer speed and bandwidth utilization (none or gzip)
-      PHOTOPRISM_WORKERS: 2 # Limits the number of indexing workers to reduce system load
-      PHOTOPRISM_DEBUG: "false" # Run in debug mode (shows additional log messages)
-      PHOTOPRISM_PUBLIC: "false" # No authentication required (disables password protection)
-      PHOTOPRISM_READONLY: "false" # Don't modify originals directory (reduced functionality)
-      PHOTOPRISM_EXPERIMENTAL: "false" # Enables experimental features
-      PHOTOPRISM_DISABLE_WEBDAV: "false" # Disables built-in WebDAV server
-      PHOTOPRISM_DISABLE_SETTINGS: "false" # Disables Settings in Web UI
-      PHOTOPRISM_DISABLE_TENSORFLOW: "false" # Disables using TensorFlow for image classification
-      PHOTOPRISM_DARKTABLE_PRESETS: "true" # Enables Darktable presets and disables concurrent RAW conversion
-      # PHOTOPRISM_FFMPEG_ENCODER: "h264_v4l2m2m"    # FFmpeg AVC encoder for video transcoding (default: libx264)
-      # PHOTOPRISM_FFMPEG_BUFFERS: "64"              # FFmpeg capture buffers (default: 32)
-      PHOTOPRISM_DETECT_NSFW: "false" # Flag photos as private that MAY be offensive
-      PHOTOPRISM_UPLOAD_NSFW: "true" # Allow uploads that MAY be offensive
-      PHOTOPRISM_DATABASE_DRIVER: "mysql" # Use MariaDB (or MySQL) instead of SQLite for improved performance
-      PHOTOPRISM_DATABASE_SERVER: "mariadb:3306" # MariaDB database server (hostname:port)
-      PHOTOPRISM_DATABASE_NAME: "photoprism" # MariaDB database schema name
-      PHOTOPRISM_DATABASE_USER: "photoprism" # MariaDB database user name
-      PHOTOPRISM_DATABASE_PASSWORD: "photoprism" # MariaDB database user password
-      PHOTOPRISM_SITE_URL: "http://localhost:80/" # Public PhotoPrism URL
-      PHOTOPRISM_SITE_TITLE: "PhotoPrism"
-      PHOTOPRISM_SITE_CAPTION: "Browse Your Life"
-      PHOTOPRISM_SITE_DESCRIPTION: ""
-      PHOTOPRISM_SITE_AUTHOR: ""
-    # For hardware AVC transcoding using the h264_v4l2m2m encoder:
-    # devices:
-    #  - "/dev/video11:/dev/video11"
-    volumes:
-      - "originals:/photoprism/originals"
-      - "storage:/photoprism/storage"
-    tmpfs:
-      - /tmp
-    labels:
-      io.balena.features.supervisor-api: 1
-    depends_on:
-      - mariadb
-
-  mariadb:
-    image: arm64v8/mariadb:10.5
-    command:
-      - mysqld
-      - --transaction-isolation=READ-COMMITTED
-      - --character-set-server=utf8mb4
-      - --collation-server=utf8mb4_unicode_ci
-      - --max-connections=512
-      - --innodb-rollback-on-timeout=OFF
-      - --innodb-lock-wait-timeout=50
-    volumes:
-      - "database:/var/lib/mysql"
-    environment:
-      MYSQL_ROOT_PASSWORD: balena
-      MYSQL_DATABASE: photoprism
-      MYSQL_USER: photoprism
-      MYSQL_PASSWORD: photoprism
-    # Repurpose the healthcheck cmd by having it export our database on a schedule.
-    # Run the backup every 1 hour to a file called hourly-backup.sql.
-    # How to restore: <https://mariadb.com/kb/en/mysqldump/#restoring>
-    healthcheck:
-      test: mysqldump -uroot -p$MYSQL_ROOT_PASSWORD --all-databases --result-file=/var/lib/mysql/hourly-backup.sql || exit 0
-      interval: 1h
-      timeout: 30s
-      retries: 3
-  duplicati:
-    image: linuxserver/duplicati:arm64v8-version-v2.0.6.1-2.0.6.1_beta_2021-05-03
-    environment:
-      PUID: "0"
-      PGID: "0"
-      CLI_ARGS: --webservice-interface=any
-    ports:
-      - 8200:8200/tcp
+      - "100:80/tcp"
+      - "443:443/tcp"
+      - "1054:1054/tcp"
+      - "1194:1194/tcp"
+      - "1195:1195/udp"
+      - "9700:9700/tcp"
+# 80/tcp pritunl web server http port (standalone mode)
+# 443/tcp pritunl web server https port (standalone and wireguard reverse-proxy mode)
+# 1194/tcp pritunl VPN service port
+# 1194/tcp pritunl OpenVPN service port
+# 1195/udp pritunl wireguard service port - No default in app, this is a suggestion only.
+# 9700/tcp pritunl web server http port (non-wireguard reverse-proxy mode)
